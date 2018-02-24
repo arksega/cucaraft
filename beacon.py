@@ -1,0 +1,41 @@
+import requests
+import time
+import etcd
+import sys
+
+client = etcd.Client(port=2379)
+lock = etcd.Lock(client, 'leader')
+started = False
+dt = None
+tick = 1
+while True:
+    try:
+        lock.acquire(blocking=True, lock_ttl=tick+1)
+        if not started:
+            print('Started')
+            started = True
+        healthy = []
+        for member in client.machines:
+            url = member + '/health'
+            try:
+                response = requests.get(url, timeout=0.1).text
+                healthy.append('true' in response)
+            except requests.exceptions.ConnectionError:
+                healthy.append(False)
+        full = all(healthy)
+        if full:
+            if dt:
+                dt = None
+            print 'Full'
+        else:
+            if not dt:
+                dt = time.time()
+            print('Degradated by {:.2f}s'.format(time.time() - dt))
+        time.sleep(tick)
+    except etcd.EtcdLockExpired:
+        sys.stdout.write('-')
+        sys.stdout.flush()
+    except etcd.EtcdException:
+        sys.stdout.write('.')
+        sys.stdout.flush()
+        time.sleep(tick)
