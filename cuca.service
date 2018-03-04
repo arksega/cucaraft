@@ -1,0 +1,7 @@
+[Unit]
+After=etcd
+
+[Service]
+ExecStart=/usr/bin/beacon
+Type=simple
+
