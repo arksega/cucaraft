@@ -1,0 +1,79 @@
+#!/bin/env python
+import sys
+import yaml
+import logging
+import salt.cloud
+import salt.client.ssh.client
+
+from copy import copy
+
+def deploy(node_name):
+    node = cloud.profile('etcd-node', node_name)
+    ip = node[node_name]['networks']['v4'][0]['ip_address']
+    return ip
+
+
+# create logger
+logger = logging.getLogger('deploy')
+logger.setLevel(logging.DEBUG)
+
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+# add formatter to ch
+ch.setFormatter(formatter)
+
+# add ch to logger
+logger.addHandler(ch)
+
+cloud = salt.cloud.CloudClient('/etc/salt/cloud.providers')
+try:
+    nnodes = int(sys.argv[1])
+except IndexError:
+    nnodes = 3
+except ValueError:
+    logger.critical('Expected parameter should be numeric')
+    exit(1)
+
+prefix = 'ring'
+logger.critical('Nodes: {}'.format(nnodes))
+all_nodes = cloud.query()['do']['digital_ocean']
+ring_nodes = [node for node in all_nodes if node.startswith(prefix)]
+logger.debug(ring_nodes)
+all_nodes = ['{}{:02}'.format(prefix, i) for i in range(len(ring_nodes) + nnodes)]
+candidate_nodes = set(all_nodes) - set(ring_nodes)
+logger.debug(candidate_nodes)
+
+cloud_map = {}
+for node in candidate_nodes:
+    logger.info('Launching {}'.format(node))
+    # cloud_map[node] = deploy(node)
+    cloud_map[node] = '1.2.3.4'
+print(cloud_map)
+
+with open('/srv/pillar/data.sls') as fd:
+    pdata = yaml.load(fd)
+
+pdata['nodes'].update(cloud_map)
+
+with open('/srv/pillar/data.sls', 'w') as fd:
+    yaml.dump(pdata, fd, default_flow_style=False)
+
+logger.info('Pillar updated')
+sys.exit()
+ssh = salt.client.ssh.client.SSHClient()
+pending_run = True
+while pending_run:
+    result = ssh.cmd('*', 'state.apply', ('etcd',), ignore_host_keys=True)
+    for node, detail in result.items():
+        if detail.get('retcode', 0) == 255:
+            logger.info('Communication error with {}, retring...'.format(node))
+            break
+    else:
+        log.info('State applied in all nodes'.format(node))
+        pending_run = False
+    result = ssh.cmd('*', 'state.apply', ('salt',), ignore_host_keys=True)
