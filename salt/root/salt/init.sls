@@ -2,9 +2,10 @@
   file.recurse:
   - source: salt://salt/cloud.profiles.d
 
-/etc/salt/cloud.providers.d:
-  file.recurse:
-  - source: salt://salt/cloud.providers.d
+/etc/salt/cloud.providers.d/do.conf:
+  file.managed:
+  - source: salt://salt/cloud.providers.d/do.conf
+  - template: jinja
 
 
 /etc/salt/roster:
@@ -12,8 +13,20 @@
   - source: salt://roster
   - template: jinja
   - context:
-    cuca: {{ pillar['bar'] }}
+    cuca: {{ pillar['source_key_path'] }}
+
+/root/.ssh/etcd:
+  file.managed:
+  - contents_pillar: source_key
+  - mode: 600
   
+/srv/pillar:
+  file.recurse:
+  - source: salt://pillar
+
+/srv/salt/pillar:
+  file.symlink:
+    - target: /srv/pillar
 
 /srv/salt/salt:
   file.recurse:

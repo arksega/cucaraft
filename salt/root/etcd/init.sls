@@ -6,9 +6,9 @@
     - pkg: etcd
   - defaults:
       nodes:
-        ring00: 46.101.238.103
-        ring01: 207.154.210.70
-        ring02: 188.166.164.2
+        {% for node, ip in pillar['nodes'].items() -%}
+        {{ node }}: {{ ip }}
+        {% endfor %}
 etcd:
   pkg.installed: []
   service.running:
