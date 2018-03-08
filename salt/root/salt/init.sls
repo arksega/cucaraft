@@ -39,9 +39,6 @@
 salt:
   pkg.installed:
     - pkgs:
-      - salt
-      - salt-cloud
-      - salt-ssh
       - python2-etcd
       - git
 
