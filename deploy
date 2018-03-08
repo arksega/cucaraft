@@ -41,7 +41,7 @@ except ValueError:
 
 prefix = 'ring'
 logger.critical('Nodes: {}'.format(nnodes))
-all_nodes = cloud.query()['do']['digital_ocean']
+all_nodes = cloud.query()['do']['digitalocean']
 ring_nodes = [node for node in all_nodes if node.startswith(prefix)]
 logger.debug(ring_nodes)
 all_nodes = ['{}{:02}'.format(prefix, i) for i in range(len(ring_nodes) + nnodes)]
