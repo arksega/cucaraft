@@ -19,6 +19,10 @@
   file.managed:
   - contents_pillar: source_key
   - mode: 600
+
+/srv/salt/salt:
+  file.recurse:
+  - source: salt://salt
   
 /srv/pillar:
   file.recurse:
@@ -27,10 +31,6 @@
 /srv/salt/pillar:
   file.symlink:
     - target: /srv/pillar
-
-/srv/salt/salt:
-  file.recurse:
-  - source: salt://salt
 
 /srv/salt/etcd:
   file.recurse:
