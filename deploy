@@ -51,8 +51,7 @@ logger.debug(candidate_nodes)
 cloud_map = {}
 for node in candidate_nodes:
     logger.info('Launching {}'.format(node))
-    # cloud_map[node] = deploy(node)
-    cloud_map[node] = '1.2.3.4'
+    cloud_map[node] = str(deploy(node))
 print(cloud_map)
 
 with open('/srv/pillar/data.sls') as fd:
@@ -64,7 +63,6 @@ with open('/srv/pillar/data.sls', 'w') as fd:
     yaml.dump(pdata, fd, default_flow_style=False)
 
 logger.info('Pillar updated')
-sys.exit()
 ssh = salt.client.ssh.client.SSHClient()
 pending_run = True
 while pending_run:
@@ -74,6 +72,6 @@ while pending_run:
             logger.info('Communication error with {}, retring...'.format(node))
             break
     else:
-        log.info('State applied in all nodes'.format(node))
+        logger.info('State applied in all nodes'.format(node))
         pending_run = False
     result = ssh.cmd('*', 'state.apply', ('salt',), ignore_host_keys=True)
