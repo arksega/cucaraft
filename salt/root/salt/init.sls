@@ -15,6 +15,10 @@
   - context:
     cuca: {{ pillar['source_key_path'] }}
 
+/srv/salt/roster:
+  file.managed:
+  - source: salt://roster
+
 /root/.ssh/etcd:
   file.managed:
   - contents_pillar: source_key
