@@ -6,7 +6,7 @@
   file.managed:
   - source: salt://salt/cloud.providers.d/do.conf
   - template: jinja
-
+  - makedirs: True
 
 /etc/salt/roster:
   file.managed:
